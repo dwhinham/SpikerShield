@@ -2,10 +2,11 @@
 #define MAX 18               // Maximum posible reading. TWEAK THIS VALUE!!
 #define TRIGGER_THRESHOLD 10 // The value the analog input must exceed in order to trigger the servo
 #define SERVO_DIGITAL_PIN 3  // Arduino Uno PWM pins are 3, 5, 6, 9, 10, and 11; pin 10 is in use by LED
-#define DEBUG true           // Enable/disable console output
 
 #include <Servo.h>
 
+String incomingString = "";
+boolean monitorMode = false;
 Servo myServo;
 int finalReading = 0;
 int litLeds = 0;
@@ -26,6 +27,29 @@ void setup() {
 }
 
 void loop() {
+  // Check for commands from serial terminal
+  while (Serial.available() > 0) {
+    char incomingChar = Serial.read();
+    if (incomingChar == '\r') {
+      // User typed 'mon'
+      if (incomingString == "mon") {
+          // Toggle monitor mode
+          monitorMode = !monitorMode;
+          
+          // Tell user whether enabled or disabled
+          String message = "Monitor mode ";
+          message += monitorMode ? "enabled." : "disabled.";
+          Serial.println(message);
+          
+          // Pause if entering monitor mode
+          if (monitorMode) {
+            delay(1000);
+          }
+      }
+      incomingString = "";
+    } else incomingString += incomingChar;
+  }
+  
   // Clear last final reading
   finalReading = 0;
   
@@ -38,11 +62,9 @@ void loop() {
   // Average the ten readings
   finalReading /= 10;
   
-  // Move the servo back and forth if the averaged reading exceeds the threshold
-  if (finalReading > TRIGGER_THRESHOLD) {
-    #if DEBUG == true
-      Serial.println("Servo triggered!");
-    #endif
+  // Move the servo back and forth if not in monitor mode and the averaged reading exceeds the threshold
+  if (!monitorMode && finalReading > TRIGGER_THRESHOLD) {
+    Serial.println("Servo triggered!");
     myServo.write(180);
     delay(1000);
     myServo.write(0);
@@ -62,12 +84,12 @@ void loop() {
     digitalWrite(leds[k], HIGH);
   }
   
-  // Dump values to serial console
-  #if DEBUG == true
+  // Dump values to serial console if in monitor mode
+  if (monitorMode) {
     Serial.print("finalReading:\t");
     Serial.print(finalReading);
     Serial.print("\t");
     Serial.print("LEDs:\t");
     Serial.println(litLeds);
-  #endif
+  }
 }
