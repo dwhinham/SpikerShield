@@ -1,4 +1,4 @@
-#define TRIGGER_THRESHOLD 10 // The value the analog input must exceed in order to trigger the button press
+#define TRIGGER_THRESHOLD 10  // The value the analog input must exceed in order to trigger the button press
 #define KEY_DELAY 200         // How long in ms to wait before a new keypress can be sent
 
 String incomingString = "";
@@ -76,6 +76,4 @@ void loop () {
     // Turn off LED
     digitalWrite(13, LOW);
   }
-  
-  
 }
